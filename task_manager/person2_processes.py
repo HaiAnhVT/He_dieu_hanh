@@ -21,49 +21,49 @@ from .models import ProcRow
 class ProcessesTabMixin:
 
     def _build_processes_tab(self, parent):
-        # Tạo một khung chứa (Frame) gắn vào cửa sổ cha (Parent)
+        # Tao mot khung chua (Frame) gan vao cua so cha (Parent)
         top = ttk.Frame(parent)
         top.pack(fill="x", padx=10, pady=8)
 
-        # Tạo ô nhập liệu tìm kiếm Entry
+        # Tao o nhap lieu tim kiem Entry
         ttk.Label(top, text="Search:").pack(side="left")
-        ent = ttk.Entry(top, textvariable=self.filter_text, width=35) # filter_text là biến để lưu nội dung gõ
+        ent = ttk.Entry(top, textvariable=self.filter_text, width=35) # filter_text la bien de luu noi dung go
         ent.pack(side="left", padx=5)
-        # Khi bấm phím Enter thì tại ô này sẽ gọi hàm refresh_processes
+        # Khi an phim Enter thi tai o nay goi ham refresh_processes
         ent.bind("<Return>", lambda e: self.refresh_processes(force=True))
 
-        # Tạo checkbox "Auto refesh" với auto_refresh là biến boolean
+        # Tao checkbox "Auto refresh" voi auto_refresh la bien Boolean
         ttk.Checkbutton(top, text="Auto refresh", variable=self.auto_refresh).pack(side="left", padx=10)
         ttk.Button(top, text="Refresh Now", command=lambda: self.refresh_all(force=True)).pack(side="left")
 
-        # Tạo một khung con btns để chứa các nút hành động, dồn về bên phải
+        #Tao mot khung con btns de chua cac nut hanh dong, day sang ben phai
         btns = ttk.Frame(top)
         btns.pack(side="right")
-        # Các nút chức năng: End task, Kill, Properties...
-        #Command=self.xxx: chỉ định hàm sẽ chạy khi bấm nút
+        # Cac nut chuc nang: End task, Kill, Properties...
+        #Command=self.xxx: chi dinh ham se chay khi bam nut
         ttk.Button(btns, text="End task", command=self.end_task_sigterm).pack(side="right", padx=4)
         ttk.Button(btns, text="Kill (SIGKILL)", command=self.kill_process).pack(side="right", padx=4)
         ttk.Button(btns, text="Properties", command=self.proc_properties).pack(side="right", padx=4)
         ttk.Button(btns, text="Set priority", command=self.set_priority).pack(side="right", padx=4)
 
-        # Định nghĩa danh sách các cột (ID của cột)
+        # Dinh nghia danh sach cac cot (ID cua cot)
         cols = ("pid", "name", "user", "cpu", "mem", "status", "nice", "threads", "fds", "start", "cmd")
-        # Tạo bảng Treeview, show="heading" nghĩa là chỉ hiện tiêu đề cột (ẩn cây thư mục)
+        # Tao bang Treeview, show="heading" nghia la chi hien tieu de cot, an cot goc (cot cay thu muc)
         self.proc_tree = ttk.Treeview(parent, columns=cols, show="headings", height=20)
         self.proc_tree.pack(fill="both", expand=True, padx=10, pady=(0, 10))
 
-        # Dictionary ánh xạ từ ID cột sang Tên hiển thị
+        # Dictionary anh xa tu ID cot sang Ten hien thi 
         headings = {
             "pid": "PID", "name": "Name", "user": "User", "cpu": "CPU %",
             "mem": "Memory", "status": "Status", "nice": "Nice",
             "threads": "Threads", "fds": "FDs", "start": "Start time", "cmd": "Command",
         }
 
-        # Vòng lặp thiết lập từng cột
+        # Vong lap thiet lap tung cot
         for c in cols:
-            # Thiết lập tiêu đề cột và sự kiên Click vào tiêu đề -> gọi hàm _sort_processes
+            # Thiet lap tieu de cot va su kien Click vao tieu de -> goi ham _sort_processes
             self.proc_tree.heading(c, text=headings[c], command=lambda cc=c: self._sort_processes(cc))
-            # Thiết lập width tùy theo nội dung cột
+            # Thiet lap width tuy theo noi dung cot
             w = 90
             if c in ("pid", "nice", "threads", "fds"): w = 70
             if c == "cpu": w = 80
@@ -71,20 +71,20 @@ class ProcessesTabMixin:
             if c in ("name", "user", "status"): w = 140
             if c == "start": w = 160
             if c == "cmd": w = 520
-            # Căn lề văn bản sang trái
+            # Can le van ban sang trai (West)
             self.proc_tree.column(c, width=w, anchor="w")
 
-        # Gọi hàm ẩn hiện cột dựa trên cấu hình
+        # Goi ham an/ hien cot dua tren cau hinh (vi du: nguoi dung tat cot User thi an di)
         self._apply_process_columns_visibility()
 
         # Scrollbar
         ysb = ttk.Scrollbar(parent, orient="vertical", command=self.proc_tree.yview)
-        # Kết nối 2 chiều: Scrollbar điều khiển Treeview, Treeview bảo vị trí cho Scrollbar
+        # Ket noi 2 chieu: Scrollbar dieu khien Treeview, Treeview bao vi tri cho Scrollbar
         self.proc_tree.configure(yscrollcommand=ysb.set)
-        ysb.place(in_=self.proc_tree, relx=1.0, rely=0, relheight=1.0, anchor="ne") # Đặt nằm đè lên mép phải bảng
+        ysb.place(in_=self.proc_tree, relx=1.0, rely=0, relheight=1.0, anchor="ne") # Dat nam de len mep phai bang
 
-        # Menu chuột phải (Context Menu)
-        self.proc_menu = tk.Menu(self, tearoff=0) 
+        # Menu chuot phai (Context menu)
+        self.proc_menu = tk.Menu(self, tearoff=0) # tearoff=0 de ngan chan xuat hien cua so doc lap, hien thi luon tren cua so ung dung
         self.proc_menu.add_command(label="End task (SIGTERM)", command=self.end_task_sigterm)
         self.proc_menu.add_command(label="Kill (SIGKILL)", command=self.kill_process)
         self.proc_menu.add_separator()
@@ -99,18 +99,18 @@ class ProcessesTabMixin:
         # <Double-1>: Click đúp chuột trái -> Xem thuộc tính
         self.proc_tree.bind("<Double-1>", lambda e: self.proc_properties())
 
-    # Xử lý Menu chuột phải
+    # Xu ly menu chuot phai
     def _popup_proc_menu(self, event):
-        #identift_row(event.y): Trả về ID của row tại vị trí con trỏ chuột Y
+        #identift_row(event.y): Tra ve ID cua dong (row) tai vi tri con tro chuot Y
         iid = self.proc_tree.identify_row(event.y)
         if iid:
-            # Nếu chuột đang trỏ vào 1 dòng thì thực hiện bôi đen (select)
+            # Neu chuot dang tro vao 1 dong, thu hien boi den (select) dong do
             self.proc_tree.selection_set(iid)
             try:
-                # Hiện menu tại tọa độ (x_root, y_root)
+                # Hien thi menu tai toa do chuot (x.root, y.root)
                 self.proc_menu.tk_popup(event.x_root, event.y_root)
             finally:
-                # Giải phóng con trỏ để đóng Menu lại
+                # Giai phong con tro de dong menu lai binh thuong
                 self.proc_menu.grab_release()
 
     # Hàm này xử lý sự kiện UI khi click header
@@ -119,7 +119,7 @@ class ProcessesTabMixin:
             # Nếu click lại vào cột đang sort -> đảo chiều (Tăng <-> Giảm)
             self.sort_desc = not self.sort_desc
         else:
-            # Nếu click cột mới -> Mặc định giảm dần (hoặc tăng dần tùy logic đã chọn)
+            # Nếu click cột mới -> Mặc định giảm dần (hoặc tăng dần tùy logic bạn chọn)
             self.sort_col = col
             self.sort_desc = True
         # Gọi refresh để vẽ lại bảng theo thứ tự mới
@@ -141,16 +141,16 @@ class ProcessesTabMixin:
                                     all_cols=list(self.proc_tree["columns"]),
                                     apply_cb=self._apply_process_columns_visibility)
 
-    # Thu thập và lọc dữ liệu
+    # Thu thap & loc du lieu
     def _collect_process_rows(self):
-        rows = [] # Danh sách chứa kết quả
+        rows = [] # danh sach chua ket qua
 
-        # Lấy text tìm kiếm, xóa khoảng trắng, chuyển thường
+        # Lay text tim kiem, xoa khoang trang thua (.strip), chuyen thuong (.lower)
         search = self.filter_text.get().strip().lower()
-        # Lấy config xem có hiển thị process hệ thống hay không
+        # Lay config xem co hien processes he thong khong
         show_system = bool(self.cfg.get("show_system_processes", True))
 
-        # psutil.process.iter : hàm của thư viện trả về interator duyệt qua toàn bộ danh sách
+        # psutil.process.iter : ham cua thu vien tra ve iterator duyet qua toan bo process
         for p in psutil.process_iter():
             try:
                 pid = p.pid
@@ -187,7 +187,7 @@ class ProcessesTabMixin:
                 except Exception:
                     mem_rss = 0
 
-                # Lấy status, nice, threads tương tự, luôn dùng try/except để tránh crash
+                # ... (Lấy status, nice, threads tương tự, luôn dùng try/except để tránh crash)
                 status = ""
                 try:
                     st = p.status()
@@ -220,7 +220,7 @@ class ProcessesTabMixin:
                 except Exception:
                     start_time = 0.0
 
-                # Đóng gói dữ liệu/ Tạo object ProcRow (định nghĩa trong models.py) để lưu trữ gọn gàng
+                # Dong goi du lieu/ Tạo object ProcRow (định nghĩa trong models.py) để lưu trữ gọn gàng
                 rows.append(ProcRow(
                     pid=pid, name=name, user=user or "",
                     cpu=cpu, mem_rss=mem_rss, status=status, nice=nice,
@@ -233,7 +233,8 @@ class ProcessesTabMixin:
             except Exception:
                 continue
         return rows
-        
+
+    # Hàm này cập nhật giao diện mà không làm "giật" màn hình (bằng cách so sánh cũ/mới).
     # Làm mới và hiển thị
     def refresh_processes(self, force=False):
         # Lấy dữ liệu mới nhất
@@ -268,8 +269,10 @@ class ProcessesTabMixin:
             else:
                 # Nếu chưa có -> Chèn mới vào cuối (Insert)
                 self.proc_tree.insert("", "end", iid=iid, values=values)
+                
+            self.proc_tree.move(iid, "", len(new_ids))
 
-        # Những ID có trong 'existing' (cũ) mà không có trong 'new_ids' (mới) thì ẩn
+        #Những ID có trong 'existing' (cũ) mà không có trong 'new_ids' (mới)
         for iid in existing - new_ids:
             self.proc_tree.delete(iid)
 
